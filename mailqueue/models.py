@@ -17,11 +17,16 @@ logger = logging.getLogger(__name__)
 
 
 class MailerMessageManager(models.Manager):
-    def send_queued(self, limit=None):
+    def send_queued(self, limit=None, aggregate=False):
         if limit is None:
             limit = getattr(settings, 'MAILQUEUE_LIMIT', defaults.MAILQUEUE_LIMIT)
 
-        for email in self.filter(sent=False)[:limit]:
+        if not aggregate:
+            emails = self.filter(sent=False)[:limit]
+        else:
+            emails = self.filter(sent=False).aggregate()
+
+        for email in emails:
             email.send_mail()
 
     def clear_sent_messages(self, offset=None):

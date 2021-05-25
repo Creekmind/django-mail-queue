@@ -133,3 +133,12 @@ class MailQueueTestCase(TestCase):
         MailFactory.create(subject='Test Email')
         self.assertEqual(mail.outbox, [])
         setattr(settings, "MAILQUEUE_QUEUE_UP", False)
+
+    def test_aggregate_mail(self):
+        setattr(settings, "MAILQUEUE_QUEUE_UP", True)
+        MailFactory.create(to_address="Jane@mail.co.uk,john@mail.co.uk,julie@mail.co.uk", content="Content A")
+        MailFactory.create(to_address="Jane@mail.co.uk,john@mail.co.uk,julie@mail.co.uk", content="Content B")
+        MailFactory.create(to_address="Jane@mail.co.uk,john@mail.co.uk,julie@mail.co.uk", content="Content C")
+
+        MailerMessage.objects.send_queued(aggregate=True)
+        self.assertEqual(len(mail.outbox), 1)
